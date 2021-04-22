@@ -32,6 +32,7 @@ while True:
             print("Connected")
             state = ConnectionState.STARTED
         except socket.error as e:
+            print("connecting failed, retry in 1 second...")
             time.sleep(1)
             pass
 

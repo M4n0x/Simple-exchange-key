@@ -30,19 +30,20 @@ def threaded_client(connection):
     secret_key = gen_sym_key()
 
     while True:
-        data = connection.recv(2048).decode('utf-8')
+        try :
+            data = connection.recv(2048).decode('utf-8')
+        except:
+            state = STATE.CLOSE_CLIENT
 
         if state == STATE.START_CLIENT:
             code = data[0:4]
             msg = data[4:]
 
-            if code != "pub":
-                break
-            pubKey = msg
+            if code == "pub":
+                pubKey = msg
+                connection.sendall(str.encode(encrypt_with_symkey(secret_key, f"sym:{secret_key}")))
+                state = STATE.WAITING_MESSAGE
 
-            connection.sendall(str.encode(encrypt_with_symkey(secret_key, f"sym:{secret_key}")))
-
-            state = STATE.WAITING_MESSAGE
         elif state == STATE.WAITING_MESSAGE:
             data = decrypt_with_symkey(secret_key, data)
             reply = 'Server Says: ' + data + ""
@@ -50,6 +51,8 @@ def threaded_client(connection):
             connection.sendall(str.encode(encrypt_with_symkey(secret_key, reply)))
         elif state == STATE.CLOSE_CLIENT:
             connection.close()
+            break
+
         
 while True:
     Client, address = ServerSocket.accept()

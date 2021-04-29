@@ -1,12 +1,26 @@
-import os
+import os, base64
+from Crypto.Cipher import AES
 
-AES_KEY_LENGTH = 16
 
-def gen_sym_key():
-    return os.urandom(AES_KEY_LENGTH) # TEMPORARY
+# https://gist.github.com/syedrakib
+def generate_secret_key():
+	AES_key_length = 16 # use larger value in production
+	secret_key = os.urandom(AES_key_length)
+	encoded_secret_key = base64.b64encode(secret_key)
+	return encoded_secret_key
 
-def encrypt_with_symkey(symkey, msg):
-    return "encrypt symkey not implemented yet"
+def encrypt_message(private_msg, encoded_secret_key, padding_character):
+	secret_key = base64.b64decode(encoded_secret_key)
+	cipher = AES.new(secret_key)
+	padded_private_msg = private_msg + (padding_character * ((16-len(private_msg)) % 16))
+	encrypted_msg = cipher.encrypt(padded_private_msg)
+	encoded_encrypted_msg = base64.b64encode(encrypted_msg)
+	return encoded_encrypted_msg
 
-def decrypt_with_symkey(symkey, msg):
-    return "decrypt with symkey not implemented yet"
+def decrypt_message(encoded_encrypted_msg, encoded_secret_key, padding_character):
+	secret_key = base64.b64decode(encoded_secret_key)
+	encrypted_msg = base64.b64decode(encoded_encrypted_msg)
+	cipher = AES.new(secret_key)
+	decrypted_msg = cipher.decrypt(encrypted_msg)
+	unpadded_private_msg = decrypted_msg.rstrip(padding_character)
+	return unpadded_private_msg

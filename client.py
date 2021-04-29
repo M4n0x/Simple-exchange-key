@@ -4,6 +4,7 @@ import socket
 import enum
 import time
 import rsa
+from security import *
 
 pub, priv = rsa.newkeys(1024)
 
@@ -28,7 +29,7 @@ while True:
         try:
             print(f"Connecting to {host}:{port}")
             ClientSocket.connect((host, port))
-            print(ClientSocket.recv(1024))
+            print(ClientSocket.recv(1024)) # Print welcome message
             print("Connected")
             state = ConnectionState.STARTED
         except socket.error as e:
@@ -45,15 +46,24 @@ while True:
 
     # Receive symetric key
     elif state == ConnectionState.WAITING_KEY:
-        message = str(ClientSocket.recv(1024), "utf-8").split(":")
-        print(message)
+        message = ClientSocket.recv(1024)
+        message = str(rsa.decrypt(message, priv), "utf-8")
+        message = message.split(":")
+
         if not message[0] == "key":
             state = ConnectionState.ENDED
         else:
-            cryptKey = message[1]
+            cryptKey = str.encode(message[1])
             state = ConnectionState.NORM
+    
+    elif state == ConnectionState.NORM:
+        inputMessage = input("Your message : ")
+        message = ClientSocket.sendall(encrypt_message(inputMessage, cryptKey, " "))
+        reply = ClientSocket.recv(1024)
+        reply = decrypt_message(reply, cryptKey, str.encode(" "))
+        
+        print(str(reply, "utf-8"))
 
     elif state == ConnectionState.ENDED:
         ClientSocket.close()
         break
-

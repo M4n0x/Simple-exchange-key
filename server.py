@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+
 import socket
 from _thread import *
 from enum import Enum
 from security import *
+import rsa
 
 class STATE(Enum):
     START_CLIENT = 1
@@ -24,14 +26,16 @@ print('Waiting for a Connection..')
 ServerSocket.listen(5)
 
 def threaded_client(connection):
-    connection.send(str.encode('Welcome to the Servern'))
-    state = STATE.WAITING_MESSAGE
+    connection.send(str.encode('Welcome to the Server'))
+    state = STATE.START_CLIENT
     pubKey = None
-    secret_key = gen_sym_key()
+    secret_key = generate_secret_key()
 
     while True:
         try :
-            data = connection.recv(2048).decode('utf-8')
+            data = connection.recv(1024).decode('utf-8')
+            if data == "":
+                state = STATE.CLOSE_CLIENT
         except:
             state = STATE.CLOSE_CLIENT
 
@@ -39,17 +43,23 @@ def threaded_client(connection):
             code = data[0:4]
             msg = data[4:]
 
-            if code == "pub":
-                pubKey = msg
-                connection.sendall(str.encode(encrypt_with_symkey(secret_key, f"sym:{secret_key}")))
+            if code == "pub:":
+                pubKey = rsa.PublicKey.load_pkcs1(bytes(msg, "utf-8"))
+                strSecretKey = str(secret_key, "utf-8")
+                newMessage = bytes(f"key:{strSecretKey}", "utf-8")
+                cipher = rsa.encrypt(newMessage, pubKey)
+                connection.sendall(cipher)
                 state = STATE.WAITING_MESSAGE
 
         elif state == STATE.WAITING_MESSAGE:
-            data = decrypt_with_symkey(secret_key, data)
-            reply = 'Server Says: ' + data + ""
+            data = decrypt_message(str.encode(data), secret_key, str.encode(" "))
+            reply = 'Server Says: ' + str(data, "utf-8") + ""
+            print(reply)
+            reply = encrypt_message(reply, secret_key, " ")
+            connection.sendall(reply)
            
-            connection.sendall(str.encode(encrypt_with_symkey(secret_key, reply)))
         elif state == STATE.CLOSE_CLIENT:
+            print(f"Closing socket")
             connection.close()
             break
 

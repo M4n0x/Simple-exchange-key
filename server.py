@@ -15,7 +15,6 @@ ServerSocket = socket.socket()
 host = '127.0.0.1'
 port = 1233
 ThreadCount = 0
-clients = ()
 
 try:
     ServerSocket.bind((host, port))
@@ -47,7 +46,7 @@ def threaded_client(connection):
                 pubKey = rsa.PublicKey.load_pkcs1(bytes(msg, "utf-8"))
                 strSecretKey = str(secret_key, "utf-8")
                 newMessage = bytes(f"key:{strSecretKey}", "utf-8")
-                cipher = rsa.encrypt(newMessage, pubKey)
+                cipher = encrypt_rsa(newMessage, pubKey)
                 connection.sendall(cipher)
                 state = STATE.WAITING_MESSAGE
 

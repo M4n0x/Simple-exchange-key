@@ -3,10 +3,10 @@
 import socket
 import enum
 import time
-import rsa
+
 from security import *
 
-pub, priv = rsa.newkeys(1024)
+pub, priv = gen_rsa()
 
 class ConnectionState(enum.Enum):
     CONNECTING = 0
@@ -47,7 +47,7 @@ while True:
     # Receive symetric key
     elif state == ConnectionState.WAITING_KEY:
         message = ClientSocket.recv(1024)
-        message = str(rsa.decrypt(message, priv), "utf-8")
+        message = str(decrypt_rsa(message, priv), "utf-8")
         message = message.split(":")
 
         if not message[0] == "key":

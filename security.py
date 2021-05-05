@@ -1,6 +1,6 @@
 import os, base64
+import rsa
 from Crypto.Cipher import AES
-
 
 # https://gist.github.com/syedrakib
 def generate_secret_key():
@@ -24,3 +24,12 @@ def decrypt_message(encoded_encrypted_msg, encoded_secret_key, padding_character
 	decrypted_msg = cipher.decrypt(encrypted_msg)
 	unpadded_private_msg = decrypted_msg.rstrip(padding_character)
 	return unpadded_private_msg
+
+def gen_rsa():
+	return rsa.newkeys(1024)
+
+def decrypt_rsa(msg, priv):
+	return rsa.decrypt(msg, priv)
+
+def encrypt_rsa(msg, pub):
+	return rsa.encrypt(msg, pub)

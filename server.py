@@ -70,5 +70,3 @@ while True:
     start_new_thread(threaded_client, (Client, ))
     ThreadCount += 1
     print('Thread Number: ' + str(ThreadCount))
-
-ServerSocket.close()
